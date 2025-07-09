@@ -19,15 +19,6 @@ export default function PageClient() {
     return <p className="text-gray-400">Incoming pokemons data...</p>;
   }
 
-  const pokemons: { name: string; url: string }[] = Array.isArray(data.results)
-    ? data.results
-    : [
-        {
-          name: data.name,
-          url: `https://pokeapi.co/api/v2/pokemon/${data.name}/`,
-        },
-      ];
-
   return (
     <>
       <div className="mb-4">
@@ -35,16 +26,24 @@ export default function PageClient() {
           type="text"
           placeholder="Filter by name"
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setPageIndex(0);
+          }}
           className="border p-2 rounded w-full"
         />
       </div>
-      <CustomTable
-        data={pokemons}
-        onRowClick={setSelected}
-        pageIndex={pageIndex}
-        onPageChange={setPageIndex}
-      />
+
+      {data.results.length === 0 ? (
+        <p className="text-gray-600">No Pokémon found matching “{filter}.”</p>
+      ) : (
+        <CustomTable
+          data={data.results}
+          onRowClick={setSelected}
+          pageIndex={pageIndex}
+          onPageChange={setPageIndex}
+        />
+      )}
       {selected && (
         <CustomModal name={selected} onClose={() => setSelected(null)} />
       )}
