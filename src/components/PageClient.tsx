@@ -54,7 +54,6 @@ export default function PageClient() {
               onRowClick={setSelected}
               pageIndex={pageIndex}
               onPageChange={setPageIndex}
-              pageSize={20}
               totalCount={listData?.count ?? 0}
               isLoading={isListLoading}
               errorMsg={listError?.message}
@@ -73,7 +72,6 @@ export default function PageClient() {
               data={triggerData.results}
               pageIndex={triggerPage}
               onPageChange={setTriggerPage}
-              pageSize={20}
               totalCount={triggerData.count}
               isLoading={isTriggerLoading}
               errorMsg={triggerError?.message}
