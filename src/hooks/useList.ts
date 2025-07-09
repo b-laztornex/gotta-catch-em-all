@@ -20,7 +20,7 @@ export function useList(pageIndex: number, filter: string) {
 
   const key = isValid ? (isFiltering ? nameUrl : listUrl) : null;
 
-  const { data, error } = useSWR(key, fetcher, {
+  const { data, error, isLoading } = useSWR(key, fetcher, {
     revalidateOnFocus: false,
     shouldRetryOnError: (err: any) => err.status !== 404,
   });
@@ -61,5 +61,6 @@ export function useList(pageIndex: number, filter: string) {
       results: data.results as { name: string; url: string }[],
     },
     error: undefined,
+    isLoading,
   };
 }
