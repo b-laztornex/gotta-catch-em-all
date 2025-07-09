@@ -6,19 +6,31 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+const NAME_PATTERN = /^[a-z0-9-]{3,}$/;
+
 export function useList(pageIndex: number, filter: string) {
   const offset = pageIndex * 20;
   const term = filter.trim().toLowerCase();
   const isFiltering = term.length > 0;
+  const isValid = !isFiltering || NAME_PATTERN.test(term);
 
-  const url = isFiltering
-    ? `https://pokeapi.co/api/v2/pokemon/${term}`
-    : `https://pokeapi.co/api/v2/pokemon?limit=20&offset=${offset}`;
+  const safeTerm = encodeURIComponent(term);
+  const listUrl = `https://pokeapi.co/api/v2/pokemon?limit=20&offset=${offset}`;
+  const nameUrl = `https://pokeapi.co/api/v2/pokemon/${safeTerm}`;
 
-  const { data, error } = useSWR(url, fetcher, {
+  const key = isValid ? (isFiltering ? nameUrl : listUrl) : null;
+
+  const { data, error } = useSWR(key, fetcher, {
     revalidateOnFocus: false,
     shouldRetryOnError: (err: any) => err.status !== 404,
   });
+
+  if (!isValid) {
+    return {
+      data: { count: 0, results: [] },
+      error: undefined,
+    };
+  }
 
   if (!data && !error) {
     return { data: null, error: null };
