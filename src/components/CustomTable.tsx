@@ -16,6 +16,8 @@ interface CustomTableProps<T extends RowWithName> {
   onRowClick?: (name: T["name"]) => void;
   pageIndex: number;
   onPageChange: (newIndex: number) => void;
+  pageSize: number;
+  totalCount: number;
 }
 
 export default function CustomTable<T extends RowWithName>({
@@ -24,6 +26,8 @@ export default function CustomTable<T extends RowWithName>({
   onRowClick,
   pageIndex,
   onPageChange,
+  pageSize,
+  totalCount,
 }: CustomTableProps<T>) {
   const defaultColumns: ColumnDef<T>[] = [
     {
@@ -37,6 +41,11 @@ export default function CustomTable<T extends RowWithName>({
     columns: cols,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const maxPage = Math.ceil(totalCount / pageSize) - 1;
+
+  const isFirst = pageIndex === 0;
+  const isLast = pageIndex >= maxPage;
 
   return (
     <div className="bg-white shadow-lg rounded-xl overflow-hidden flex flex-col">
@@ -83,7 +92,7 @@ export default function CustomTable<T extends RowWithName>({
       <div className="px-6 py-4 bg-gray-50 flex justify-between items-center">
         <button
           onClick={() => onPageChange(pageIndex - 1)}
-          disabled={pageIndex === 0}
+          disabled={isFirst}
           className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
         >
           Previous
@@ -91,6 +100,7 @@ export default function CustomTable<T extends RowWithName>({
         <span className="text-sm text-gray-700">Page {pageIndex + 1}</span>
         <button
           onClick={() => onPageChange(pageIndex + 1)}
+          disabled={isLast}
           className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
         >
           Next

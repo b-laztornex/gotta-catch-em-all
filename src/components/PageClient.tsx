@@ -55,6 +55,8 @@ export default function PageClient() {
               onRowClick={setSelected}
               pageIndex={pageIndex}
               onPageChange={setPageIndex}
+              pageSize={20}
+              totalCount={data.count}
             />
           )}
         </div>
@@ -70,6 +72,8 @@ export default function PageClient() {
               data={triggerData.results}
               pageIndex={triggerPage}
               onPageChange={setTriggerPage}
+              pageSize={20}
+              totalCount={triggerData.count}
             />
           )}
         </div>
