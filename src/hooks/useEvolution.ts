@@ -9,7 +9,9 @@ const fetcher = (url: string) =>
 export function useEvolution(pageIndex: number) {
   const offset = pageIndex * 20;
   const url = `https://pokeapi.co/api/v2/evolution-trigger?limit=20&offset=${offset}`;
-  const { data, error } = useSWR(url, fetcher, { revalidateOnFocus: false });
+  const { data, error, isLoading } = useSWR(url, fetcher, {
+    revalidateOnFocus: false,
+  });
 
   if (!data || error) {
     return { data: null, error: null };
@@ -21,5 +23,6 @@ export function useEvolution(pageIndex: number) {
       results: data.results as { name: string; url: string }[],
     },
     error: undefined,
+    isLoading,
   };
 }
