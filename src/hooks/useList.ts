@@ -1,62 +1,53 @@
 import useSWR from "swr";
-import { fetchJson } from "@/lib/apiClient";
-import { API_BASE_URL } from "@/lib/constants";
+import { fetchJson, HttpError } from "@/lib/apiClient";
+import { API_BASE_URL, PAGE_SIZE } from "@/lib/constants";
+import type { UseFetchResult, PagedResult } from "@/lib/types";
 
 const NAME_PATTERN = /^[a-z0-9-]{3,}$/;
 
-export function useList(pageIndex: number, filter: string) {
-  const offset = pageIndex * 20;
+export function useList(
+  pageIndex: number,
+  filter: string
+): UseFetchResult<{ name: string; url: string }> {
+  const offset = pageIndex * PAGE_SIZE;
   const term = filter.trim().toLowerCase();
   const isFiltering = term.length > 0;
   const isValid = !isFiltering || NAME_PATTERN.test(term);
 
   const safeTerm = encodeURIComponent(term);
-  const listUrl = `${API_BASE_URL}/pokemon?limit=20&offset=${offset}`;
+  const listUrl = `${API_BASE_URL}/pokemon?limit=${PAGE_SIZE}&offset=${offset}`;
   const nameUrl = `${API_BASE_URL}/pokemon/${safeTerm}`;
-
   const key = isValid ? (isFiltering ? nameUrl : listUrl) : null;
 
   const { data, error, isLoading } = useSWR(key, fetchJson, {
     revalidateOnFocus: false,
-    shouldRetryOnError: (err: any) => err.status !== 404,
+    shouldRetryOnError: (err: unknown) =>
+      !(err instanceof HttpError && err.status === 404),
   });
 
   if (!isValid) {
-    return {
-      data: { count: 0, results: [] },
-      error: undefined,
-    };
+    return { data: null, error: null, isLoading: false };
   }
-
   if (!data && !error) {
-    return { data: null, error: null };
+    return { data: null, error: null, isLoading: true };
   }
 
-  if (isFiltering && data && !Array.isArray(data)) {
-    return {
-      data: {
-        count: 1,
-        results: [
-          { name: data.name as string, url: data.species.url as string },
-        ],
-      },
-      error: undefined,
-    };
-  }
-
-  if (isFiltering && error) {
-    return {
-      data: { count: 0, results: [] },
-      error: undefined,
-    };
+  if (isFiltering) {
+    const paged: PagedResult<{ name: string; url: string }> =
+      data && !(data as any[]).length
+        ? {
+            count: 1,
+            results: [
+              { name: (data as any).name, url: (data as any).species.url },
+            ],
+          }
+        : { count: 0, results: [] };
+    return { data: paged, error: null, isLoading: false };
   }
 
   return {
-    data: {
-      count: data.count as number,
-      results: data.results as { name: string; url: string }[],
-    },
-    error: undefined,
+    data: { count: (data as any).count, results: (data as any).results },
+    error: null,
     isLoading,
   };
 }
