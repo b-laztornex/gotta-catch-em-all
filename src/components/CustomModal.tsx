@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import useSWR from "swr";
 
 interface PokemonDetail {
   name: string;
@@ -15,8 +16,13 @@ interface PokemonDetail {
   };
 }
 
-import pokemonDetails from "@/data/pokemonDetails.json";
-const details: Record<string, PokemonDetail> = pokemonDetails;
+const fetcher = (url: string) =>
+  fetch(url).then((res) => {
+    if (!res.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return res.json() as Promise<PokemonDetail>;
+  });
 
 type CustomModalProps = {
   name: string;
@@ -24,7 +30,13 @@ type CustomModalProps = {
 };
 
 export default function CustomModal({ name, onClose }: CustomModalProps) {
-  const data = details[name.toLowerCase()];
+  const { data, error } = useSWR<PokemonDetail>(
+    `https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
 
   return (
     <Dialog
@@ -38,12 +50,17 @@ export default function CustomModal({ name, onClose }: CustomModalProps) {
           <DialogTitle>{name}</DialogTitle>
           <DialogClose />
         </DialogHeader>
-
-        {!data ? (
-          <p className="text-red-500">No local data found for “{name}”.</p>
+        {error ? (
+          <p className="text-red-600">Failed to load Pokémon details.</p>
+        ) : !data ? (
+          <p className="text-gray-400">Loading Pokémon details...</p>
         ) : (
-          <div className="space-y-2">
-            <img src={data.sprites.front_default} alt={name} />
+          <div className="flex flex-col items-center">
+            <img
+              src={data.sprites.front_default}
+              alt={data.name}
+              className="mb-4"
+            />
             <p>
               <strong>Height:</strong> {data.height}
             </p>
