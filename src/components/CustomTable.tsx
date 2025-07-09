@@ -18,6 +18,8 @@ interface CustomTableProps<T extends RowWithName> {
   onPageChange: (newIndex: number) => void;
   pageSize: number;
   totalCount: number;
+  errorMsg?: string;
+  isLoading?: boolean;
 }
 
 export default function CustomTable<T extends RowWithName>({
@@ -28,6 +30,8 @@ export default function CustomTable<T extends RowWithName>({
   onPageChange,
   pageSize,
   totalCount,
+  errorMsg,
+  isLoading = false,
 }: CustomTableProps<T>) {
   const defaultColumns: ColumnDef<T>[] = [
     {
@@ -65,27 +69,57 @@ export default function CustomTable<T extends RowWithName>({
           ))}
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
-          {table.getRowModel().rows.map((row, ri) => {
-            const clickHandler = onRowClick
-              ? () => onRowClick(row.original.name)
-              : undefined;
-            const stripeBg = ri % 2 === 0 ? "bg-white" : "bg-gray-50";
-            return (
-              <tr
-                key={row.id}
-                onClick={clickHandler}
-                className={`${stripeBg} ${
-                  clickHandler ? "hover:bg-gray-100 cursor-pointer" : ""
-                }`}
+          {errorMsg ? (
+            <tr>
+              <td
+                colSpan={cols.length}
+                className="px-6 py-4 text-sm text-red-600 text-center"
               >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-6 py-4 text-sm text-gray-600">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
+                Error: {errorMsg}
+              </td>
+            </tr>
+          ) : isLoading ? (
+            Array.from({ length: pageSize }).map((_, ri) => {
+              const stripeBg = ri % 2 === 0 ? "bg-white" : "bg-gray-50";
+              return (
+                <tr key={`skeleton-${ri}`} className={stripeBg}>
+                  {cols.map((col, ci) => (
+                    <td key={ci} className="px-6 py-4 text-sm text-gray-600">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                    </td>
+                  ))}
+                </tr>
+              );
+            })
+          ) : (
+            table.getRowModel().rows.map((row, ri) => {
+              const clickHandler = onRowClick
+                ? () => onRowClick(row.original.name)
+                : undefined;
+              const stripeBg = ri % 2 === 0 ? "bg-white" : "bg-gray-50";
+              return (
+                <tr
+                  key={row.id}
+                  onClick={clickHandler}
+                  className={`${stripeBg} ${
+                    clickHandler ? "hover:bg-gray-100 cursor-pointer" : ""
+                  }`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="px-6 py-4 text-sm text-gray-600"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </table>
 
