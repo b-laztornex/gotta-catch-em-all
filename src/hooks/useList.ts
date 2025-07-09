@@ -1,10 +1,6 @@
 import useSWR from "swr";
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw res;
-  return res.json();
-};
+import { fetchJson } from "@/lib/apiClient";
+import { API_BASE_URL } from "@/lib/constants";
 
 const NAME_PATTERN = /^[a-z0-9-]{3,}$/;
 
@@ -15,12 +11,12 @@ export function useList(pageIndex: number, filter: string) {
   const isValid = !isFiltering || NAME_PATTERN.test(term);
 
   const safeTerm = encodeURIComponent(term);
-  const listUrl = `https://pokeapi.co/api/v2/pokemon?limit=20&offset=${offset}`;
-  const nameUrl = `https://pokeapi.co/api/v2/pokemon/${safeTerm}`;
+  const listUrl = `${API_BASE_URL}/pokemon?limit=20&offset=${offset}`;
+  const nameUrl = `${API_BASE_URL}/pokemon/${safeTerm}`;
 
   const key = isValid ? (isFiltering ? nameUrl : listUrl) : null;
 
-  const { data, error, isLoading } = useSWR(key, fetcher, {
+  const { data, error, isLoading } = useSWR(key, fetchJson, {
     revalidateOnFocus: false,
     shouldRetryOnError: (err: any) => err.status !== 404,
   });
