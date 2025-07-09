@@ -5,25 +5,10 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import { API_BASE_URL } from "@/lib/constants";
 import useSWR from "swr";
-
-interface PokemonDetail {
-  name: string;
-  height: number;
-  weight: number;
-  sprites: {
-    front_default: string;
-  };
-}
-
-const fetcher = (url: string) =>
-  fetch(url).then((res) => {
-    if (!res.ok) {
-      throw new Error("Network response was not ok");
-    }
-    return res.json() as Promise<PokemonDetail>;
-  });
+import { fetchJson } from "@/lib/apiClient";
+import { API_BASE_URL } from "@/lib/constants";
+import type { PokemonDetail } from "@/lib/types";
 
 type CustomModalProps = {
   name: string;
@@ -33,10 +18,8 @@ type CustomModalProps = {
 export default function CustomModal({ name, onClose }: CustomModalProps) {
   const { data, error } = useSWR<PokemonDetail>(
     `${API_BASE_URL}/pokemon/${name.toLowerCase()}`,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-    }
+    fetchJson,
+    { revalidateOnFocus: false }
   );
 
   return (
