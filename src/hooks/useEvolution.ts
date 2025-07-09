@@ -1,15 +1,11 @@
 import useSWR from "swr";
-
-const fetcher = (url: string) =>
-  fetch(url).then((res) => {
-    if (!res.ok) throw new Error("Network response was not ok");
-    return res.json();
-  });
+import { API_BASE_URL, PAGE_SIZE } from "@/lib/constants";
+import { fetchJson } from "@/lib/apiClient";
 
 export function useEvolution(pageIndex: number) {
-  const offset = pageIndex * 20;
-  const url = `https://pokeapi.co/api/v2/evolution-trigger?limit=20&offset=${offset}`;
-  const { data, error, isLoading } = useSWR(url, fetcher, {
+  const offset = pageIndex * PAGE_SIZE;
+  const url = `${API_BASE_URL}/evolution-trigger?limit=${PAGE_SIZE}&offset=${offset}`;
+  const { data, error, isLoading } = useSWR(url, fetchJson, {
     revalidateOnFocus: false,
   });
 
