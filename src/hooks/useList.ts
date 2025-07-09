@@ -1,10 +1,10 @@
 import useSWR from "swr";
 
-const fetcher = (url: string) =>
-  fetch(url).then((res) => {
-    if (!res.ok) throw new Error("Network response was not ok");
-    return res.json();
-  });
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw res;
+  return res.json();
+};
 
 export function useList(pageIndex: number, filter: string) {
   const offset = pageIndex * 20;
@@ -12,33 +12,41 @@ export function useList(pageIndex: number, filter: string) {
   const isFiltering = term.length > 0;
 
   const url = isFiltering
-    ? `https://pokeapi.co/api/v2/pokemon?limit=2000`
+    ? `https://pokeapi.co/api/v2/pokemon/${term}`
     : `https://pokeapi.co/api/v2/pokemon?limit=20&offset=${offset}`;
 
-  const { data, error } = useSWR(url, fetcher, { revalidateOnFocus: false });
+  const { data, error } = useSWR(url, fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: (err: any) => err.status !== 404,
+  });
 
-  if (!data || error) {
+  if (!data && !error) {
     return { data: null, error: null };
   }
 
-  if (!isFiltering) {
+  if (isFiltering && data && !Array.isArray(data)) {
     return {
       data: {
-        count: data.count,
-        results: data.results as { name: string; url: string }[],
+        count: 1,
+        results: [
+          { name: data.name as string, url: data.species.url as string },
+        ],
       },
       error: undefined,
     };
   }
 
-  const all: { name: string; url: string }[] = data.results;
-  const filtered = all.filter((p) => p.name.startsWith(term));
-  const paged = filtered.slice(offset, offset + 20);
+  if (isFiltering && error) {
+    return {
+      data: { count: 0, results: [] },
+      error: undefined,
+    };
+  }
 
   return {
     data: {
-      count: filtered.length,
-      results: paged,
+      count: data.count as number,
+      results: data.results as { name: string; url: string }[],
     },
     error: undefined,
   };
