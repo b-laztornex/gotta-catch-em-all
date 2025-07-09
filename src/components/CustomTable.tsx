@@ -1,3 +1,4 @@
+import { PAGE_SIZE } from "@/lib/constants";
 import {
   ColumnDef,
   useReactTable,
@@ -16,7 +17,6 @@ interface CustomTableProps<T extends RowWithName> {
   onRowClick?: (name: T["name"]) => void;
   pageIndex: number;
   onPageChange: (newIndex: number) => void;
-  pageSize: number;
   totalCount: number;
   errorMsg?: string;
   isLoading?: boolean;
@@ -28,7 +28,6 @@ export default function CustomTable<T extends RowWithName>({
   onRowClick,
   pageIndex,
   onPageChange,
-  pageSize,
   totalCount,
   errorMsg,
   isLoading = false,
@@ -46,7 +45,7 @@ export default function CustomTable<T extends RowWithName>({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const maxPage = Math.ceil(totalCount / pageSize) - 1;
+  const maxPage = Math.ceil(totalCount / PAGE_SIZE) - 1;
 
   const isFirst = pageIndex === 0;
   const isLast = pageIndex >= maxPage;
@@ -79,10 +78,10 @@ export default function CustomTable<T extends RowWithName>({
               </td>
             </tr>
           ) : isLoading ? (
-            Array.from({ length: pageSize }).map((_, ri) => {
+            table.getRowModel().rows.map((row, ri) => {
               const stripeBg = ri % 2 === 0 ? "bg-white" : "bg-gray-50";
               return (
-                <tr key={`skeleton-${ri}`} className={stripeBg}>
+                <tr key={row.original.name} className={stripeBg}>
                   {cols.map((col, ci) => (
                     <td key={ci} className="px-6 py-4 text-sm text-gray-600">
                       <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
