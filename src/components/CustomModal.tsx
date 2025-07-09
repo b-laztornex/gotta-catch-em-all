@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { API_BASE_URL } from "@/lib/constants";
 import useSWR from "swr";
 
 interface PokemonDetail {
@@ -31,7 +32,7 @@ type CustomModalProps = {
 
 export default function CustomModal({ name, onClose }: CustomModalProps) {
   const { data, error } = useSWR<PokemonDetail>(
-    `https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`,
+    `${API_BASE_URL}/pokemon/${name.toLowerCase()}`,
     fetcher,
     {
       revalidateOnFocus: false,
