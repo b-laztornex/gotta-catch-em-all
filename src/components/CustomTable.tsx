@@ -5,77 +5,97 @@ import {
   getCoreRowModel,
 } from "@tanstack/react-table";
 
-type Pokemon = { name: string; url: string };
+interface RowWithName {
+  name: string;
+  [key: string]: any;
+}
 
-interface CustomTableProps {
-  data: Pokemon[];
-  onRowClick: (name: string) => void;
+interface CustomTableProps<T extends RowWithName> {
+  data: T[];
+  columns?: ColumnDef<T>[];
+  onRowClick?: (name: T["name"]) => void;
   pageIndex: number;
   onPageChange: (newIndex: number) => void;
 }
 
-export default function CustomTable({
+export default function CustomTable<T extends RowWithName>({
   data,
+  columns,
   onRowClick,
   pageIndex,
   onPageChange,
-}: CustomTableProps) {
-  const columns: ColumnDef<Pokemon>[] = [
-    { accessorKey: "name", header: "Name" },
+}: CustomTableProps<T>) {
+  const defaultColumns: ColumnDef<T>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
   ];
-
+  const cols = columns ?? defaultColumns;
   const table = useReactTable({
     data,
-    columns,
+    columns: cols,
     getCoreRowModel: getCoreRowModel(),
   });
 
   return (
-    <>
-      <table className="min-w-full table-auto">
-        <thead>
+    <div className="bg-white shadow-lg rounded-xl overflow-hidden flex flex-col">
+      <table className="w-full table-auto divide-y divide-gray-200">
+        <thead className="bg-gray-50">
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id}>
               {hg.headers.map((h) => (
-                <th key={h.id} className="px-4 py-2 text-left">
+                <th
+                  key={h.id}
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700"
+                >
                   {flexRender(h.column.columnDef.header, h.getContext())}
                 </th>
               ))}
             </tr>
           ))}
         </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr
-              key={row.id}
-              className="hover:bg-gray-100 cursor-pointer"
-              onClick={() => onRowClick(row.original.name)}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-2">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
+        <tbody className="bg-white divide-y divide-gray-100">
+          {table.getRowModel().rows.map((row, ri) => {
+            const clickHandler = onRowClick
+              ? () => onRowClick(row.original.name)
+              : undefined;
+            const stripeBg = ri % 2 === 0 ? "bg-white" : "bg-gray-50";
+            return (
+              <tr
+                key={row.id}
+                onClick={clickHandler}
+                className={`${stripeBg} ${
+                  clickHandler ? "hover:bg-gray-100 cursor-pointer" : ""
+                }`}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-6 py-4 text-sm text-gray-600">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-      <div className="flex justify-between mt-4">
+
+      <div className="px-6 py-4 bg-gray-50 flex justify-between items-center">
         <button
           onClick={() => onPageChange(pageIndex - 1)}
           disabled={pageIndex === 0}
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
         >
           Previous
         </button>
-        <span>Page {pageIndex + 1}</span>
+        <span className="text-sm text-gray-700">Page {pageIndex + 1}</span>
         <button
           onClick={() => onPageChange(pageIndex + 1)}
-          className="px-4 py-2 bg-gray-200 rounded"
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
         >
           Next
         </button>
       </div>
-    </>
+    </div>
   );
 }
