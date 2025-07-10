@@ -3,8 +3,9 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { getPokemonDetail, getEvolutionTriggers } from "@/lib/api";
 import type { PokemonDetail, NamedAPIResource, PagedResult } from "@/lib/types";
-import Table, { Column } from "@/components/CustomTable";
+import CustomTable from "@/components/CustomTable";
 import { PAGE_SIZE } from "@/lib/constants";
+import { Column } from "@/lib/types";
 
 interface Props {
   pokemon: PokemonDetail;
@@ -43,10 +44,9 @@ export default function PokemonPage({ pokemon, triggers, triggerPage }: Props) {
         </p>
       </div>
 
-      {/* Optional Evolution Triggers Table */}
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">Evolution Triggers</h2>
-        <Table
+        <CustomTable
           columns={cols}
           data={triggers.results}
           pageIndex={triggerPage}
