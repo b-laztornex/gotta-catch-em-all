@@ -26,22 +26,35 @@ export default function Table<T>({
   const isLast = pageIndex >= maxPage;
 
   return (
-    <div className="shadow rounded overflow-hidden">
-      <table className="w-full table-auto">
-        <thead className="bg-gray-100">
+    <div className="overflow-x-auto bg-white shadow-xl rounded-lg">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-blue-600">
           <tr>
             {columns.map((col) => (
-              <th key={String(col.accessor)} className="p-2 text-left">
+              <th
+                key={String(col.accessor)}
+                className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+              >
                 {col.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-200">
           {data.map((row, idx) => (
-            <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+            <tr
+              key={idx}
+              className={
+                idx % 2 === 0
+                  ? "bg-white hover:bg-blue-50"
+                  : "bg-gray-50 hover:bg-blue-50"
+              }
+            >
               {columns.map((col) => (
-                <td key={String(col.accessor)} className="p-2">
+                <td
+                  key={String(col.accessor)}
+                  className="px-4 py-2 whitespace-nowrap text-sm text-gray-700"
+                >
                   {String(row[col.accessor])}
                 </td>
               ))}
@@ -50,30 +63,31 @@ export default function Table<T>({
           {data.length === 0 && (
             <tr>
               <td
-                className="p-4 text-center text-gray-500"
+                className="px-4 py-6 text-center text-gray-400"
                 colSpan={columns.length}
               >
-                No data.
+                No data available.
               </td>
             </tr>
           )}
         </tbody>
       </table>
-      <div className="p-2 flex justify-between items-center">
+
+      <div className="px-4 py-3 bg-gray-100 flex justify-between items-center rounded-b-lg">
         <button
           onClick={() => onPageChange(pageIndex - 1)}
           disabled={isFirst}
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           Previous
         </button>
-        <span>
+        <span className="text-sm text-gray-700">
           Page {pageIndex + 1} of {maxPage + 1}
         </span>
         <button
           onClick={() => onPageChange(pageIndex + 1)}
           disabled={isLast}
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           Next
         </button>
