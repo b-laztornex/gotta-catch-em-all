@@ -1,22 +1,20 @@
-// lib/types.ts
+export interface NamedAPIResource {
+  name: string;
+  url: string;
+}
 
-export interface PagedResult<T> {
+export interface PokemonListResponse {
   count: number;
-  results: T[];
+  results: NamedAPIResource[];
 }
 
-export interface UseFetchResult<T> {
-  data: PagedResult<T> | null;
-  error: Error | null;
-  isLoading: boolean;
-}
-
-// For Pokémon details in the modal
 export interface PokemonDetail {
+  id: number;
   name: string;
   height: number;
   weight: number;
   sprites: {
     front_default: string;
+    [key: string]: any;
   };
 }
