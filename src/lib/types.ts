@@ -18,3 +18,8 @@ export interface PokemonDetail {
     [key: string]: any;
   };
 }
+
+export interface PagedResult<T> {
+  count: number;
+  results: T[];
+}
