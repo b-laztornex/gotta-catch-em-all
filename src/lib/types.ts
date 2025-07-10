@@ -1,3 +1,8 @@
+export type Column<T> = {
+  header: string;
+  accessor: keyof T;
+};
+
 export interface NamedAPIResource {
   name: string;
   url: string;
