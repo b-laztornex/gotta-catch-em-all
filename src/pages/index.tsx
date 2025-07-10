@@ -1,86 +1,87 @@
 import "../app/globals.css";
+
 import { GetServerSideProps } from "next";
-import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
-import { getPokemonList } from "@/lib/api";
-import { PAGE_SIZE } from "@/lib/constants";
-import type { NamedAPIResource } from "@/lib/types";
+import { useState, useEffect } from "react";
+
+import Table, { Column } from "@/components/CustomTable";
+import CustomModal from "@/components/CustomModal";
+import { getPokemonList, getPokemonDetail } from "@/lib/api";
+import type { PokemonDetail, NamedAPIResource, PagedResult } from "@/lib/types";
 
 interface Props {
-  results: NamedAPIResource[];
-  count: number;
-  pageIndex: number;
+  listData: PagedResult<NamedAPIResource>;
+  initialPage: number;
+  initialFilter: string;
+  modalData: PokemonDetail | null;
 }
 
-export default function Home({ results, count, pageIndex }: Props) {
+export default function HomePage({
+  listData,
+  initialPage,
+  initialFilter,
+  modalData,
+}: Props) {
   const router = useRouter();
-  const [filter, setFilter] = useState("");
-  const maxPage = Math.ceil(count / PAGE_SIZE) - 1;
+  const [page, setPage] = useState(initialPage);
+  const [filter, setFilter] = useState(initialFilter);
 
-  const applyFilter = () => {
-    const name = filter.trim().toLowerCase();
-    if (name) router.push(`/pokemon/${name}`);
+  // keep filter in sync if user navigates via back/forward
+  useEffect(() => {
+    setFilter(initialFilter);
+    setPage(initialPage);
+  }, [initialFilter, initialPage]);
+
+  const columns: Column<NamedAPIResource>[] = [
+    { header: "Name", accessor: "name" },
+  ];
+
+  const handleRowClick = (name: string) => {
+    router.push(
+      {
+        pathname: "/",
+        query: { page, filter, modal: name },
+      },
+      undefined
+      // no shallow: re-runs getServerSideProps
+    );
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    router.push({ pathname: "/", query: { page: newPage, filter } });
+  };
+
+  const closeModal = () => {
+    const { modal, ...keep } = router.query;
+    router.push({ pathname: "/", query: keep });
   };
 
   return (
     <div className="p-8 space-y-6">
-      <div>
-        <input
-          type="text"
-          placeholder="Exact filter by name"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") applyFilter();
-          }}
-          className="border p-2 rounded w-full"
-        />
-      </div>
+      <input
+        type="text"
+        placeholder="Filter by name"
+        value={filter}
+        onChange={(e) => {
+          const v = e.target.value;
+          setFilter(v);
+          setPage(0);
+          router.push({ pathname: "/", query: { page: 0, filter: v } });
+        }}
+        className="border p-2 rounded w-full mb-4"
+      />
 
-      <table className="w-full border table-auto">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-2 text-left">Name</th>
-          </tr>
-        </thead>
-        <tbody>
-          {results.map((p) => (
-            <tr key={p.name} className="hover:bg-gray-50">
-              <td className="p-2">
-                <Link href={`/pokemon/${p.name}`}>{p.name}</Link>
-              </td>
-            </tr>
-          ))}
-          {results.length === 0 && (
-            <tr>
-              <td className="p-4 text-center text-gray-500">
-                No Pokémon found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <Table
+        columns={columns}
+        data={listData.results}
+        pageIndex={page}
+        totalCount={listData.count}
+        onPageChange={handlePageChange}
+        onRowClick={handleRowClick}
+      />
 
-      <div className="flex justify-between items-center">
-        <button
-          onClick={() => router.push(`/?page=${pageIndex - 1}`)}
-          disabled={pageIndex <= 0}
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span>
-          Page {pageIndex + 1} of {maxPage + 1}
-        </span>
-        <button
-          onClick={() => router.push(`/?page=${pageIndex + 1}`)}
-          disabled={pageIndex >= maxPage}
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      {modalData && <CustomModal pokemon={modalData} onClose={closeModal} />}
     </div>
   );
 }
@@ -88,15 +89,42 @@ export default function Home({ results, count, pageIndex }: Props) {
 export const getServerSideProps: GetServerSideProps<Props> = async ({
   query,
 }) => {
-  const pageIndex = parseInt(
-    Array.isArray(query.page) ? query.page[0] : query.page || "0",
-    10
-  );
-  const offset = pageIndex * PAGE_SIZE;
+  const page = parseInt((query.page as string) || "0", 10);
+  const filter = (query.filter as string) || "";
+  const modal = query.modal as string | undefined;
 
-  const { results, count } = await getPokemonList(offset);
+  // 1) list or exact‐match filter
+  let listData: PagedResult<NamedAPIResource>;
+  if (filter) {
+    try {
+      const detail = await getPokemonDetail(filter.toLowerCase());
+      listData = {
+        count: 1,
+        results: [{ name: detail.name, url: detail.species.url }],
+      };
+    } catch {
+      listData = { count: 0, results: [] };
+    }
+  } else {
+    listData = await getPokemonList(page);
+  }
+
+  // 2) modal detail
+  let modalData: PokemonDetail | null = null;
+  if (modal) {
+    try {
+      modalData = await getPokemonDetail(modal.toLowerCase());
+    } catch {
+      modalData = null;
+    }
+  }
 
   return {
-    props: { results, count, pageIndex },
+    props: {
+      listData,
+      initialPage: page,
+      initialFilter: filter,
+      modalData,
+    },
   };
 };
