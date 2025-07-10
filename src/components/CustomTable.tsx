@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { PAGE_SIZE } from "@/lib/constants";
 import type { Column } from "@/lib/types";
+import Pagination from "./Pagination";
 
 interface TableProps<T> {
   columns: Column<T>[];
@@ -25,12 +25,14 @@ export default function CustomTable<T extends { name: string }>({
   onPageChange,
   onRowClick,
 }: TableProps<T>) {
-  const maxPage = Math.ceil(totalCount / PAGE_SIZE) - 1;
-  const isFirst = pageIndex <= 0;
-  const isLast = pageIndex >= maxPage;
-
   return (
     <div className="overflow-x-auto bg-white shadow-xl rounded-lg">
+      <Pagination
+        pageIndex={pageIndex}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+      />
+
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-blue-600">
           <tr>
@@ -97,25 +99,11 @@ export default function CustomTable<T extends { name: string }>({
         </tbody>
       </table>
 
-      <div className="px-4 py-3 bg-gray-100 flex justify-between items-center rounded-b-lg">
-        <button
-          onClick={() => onPageChange(pageIndex - 1)}
-          disabled={isFirst}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-        >
-          Previous
-        </button>
-        <span className="text-sm text-gray-700">
-          Page {pageIndex + 1} of {maxPage + 1}
-        </span>
-        <button
-          onClick={() => onPageChange(pageIndex + 1)}
-          disabled={isLast}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        pageIndex={pageIndex}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+      />
     </div>
   );
 }
