@@ -1,25 +1,29 @@
 "use client";
-import { PAGE_SIZE } from "@/lib/constants";
 
-export type Column<T> = {
-  header: string;
-  accessor: keyof T;
-};
+import React from "react";
+import { PAGE_SIZE } from "@/lib/constants";
+import type { Column } from "@/lib/types";
 
 interface TableProps<T> {
   columns: Column<T>[];
   data: T[];
   pageIndex: number;
   totalCount: number;
+  isLoading?: boolean;
+  errorMsg?: string;
   onPageChange: (newPage: number) => void;
+  onRowClick: (name: string) => void;
 }
 
-export default function Table<T>({
+export default function CustomTable<T extends { name: string }>({
   columns,
   data,
   pageIndex,
   totalCount,
+  isLoading = false,
+  errorMsg,
   onPageChange,
+  onRowClick,
 }: TableProps<T>) {
   const maxPage = Math.ceil(totalCount / PAGE_SIZE) - 1;
   const isFirst = pageIndex <= 0;
@@ -41,35 +45,55 @@ export default function Table<T>({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {data.map((row, idx) => (
-            <tr
-              key={idx}
-              className={
-                idx % 2 === 0
-                  ? "bg-white hover:bg-blue-50"
-                  : "bg-gray-50 hover:bg-blue-50"
-              }
-            >
-              {columns.map((col) => (
-                <td
-                  key={String(col.accessor)}
-                  className="px-4 py-2 whitespace-nowrap text-sm text-gray-700"
-                >
-                  {String(row[col.accessor])}
-                </td>
-              ))}
+          {isLoading && (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-4 text-center">
+                Loading…
+              </td>
             </tr>
-          ))}
-          {data.length === 0 && (
+          )}
+          {errorMsg && !isLoading && (
             <tr>
               <td
-                className="px-4 py-6 text-center text-gray-400"
                 colSpan={columns.length}
+                className="px-4 py-4 text-center text-red-600"
+              >
+                Error: {errorMsg}
+              </td>
+            </tr>
+          )}
+          {!isLoading && !errorMsg && data.length === 0 && (
+            <tr>
+              <td
+                colSpan={columns.length}
+                className="px-4 py-6 text-center text-gray-400"
               >
                 No data available.
               </td>
             </tr>
           )}
+          {!isLoading &&
+            !errorMsg &&
+            data.map((row, idx) => (
+              <tr
+                key={idx}
+                className={`cursor-pointer ${
+                  idx % 2 === 0
+                    ? "bg-white hover:bg-blue-50"
+                    : "bg-gray-50 hover:bg-blue-50"
+                }`}
+                onClick={() => onRowClick(row.name)}
+              >
+                {columns.map((col) => (
+                  <td
+                    key={String(col.accessor)}
+                    className="px-4 py-2 whitespace-nowrap text-sm text-gray-700"
+                  >
+                    {String(row[col.accessor])}
+                  </td>
+                ))}
+              </tr>
+            ))}
         </tbody>
       </table>
 
