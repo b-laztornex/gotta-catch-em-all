@@ -1,11 +1,13 @@
+import React, { useState, useEffect } from "react";
 import { GetServerSideProps } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { getPokemonDetail, getEvolutionTriggers } from "@/lib/api";
-import type { PokemonDetail, NamedAPIResource, PagedResult } from "@/lib/types";
 import CustomTable from "@/components/CustomTable";
+import CustomModal from "@/components/CustomModal";
+import type { PokemonDetail, NamedAPIResource, PagedResult } from "@/lib/types";
+import { ColumnDef } from "@tanstack/react-table";
+import { getPokemonDetail, getEvolutionTriggers } from "@/lib/api";
 import { PAGE_SIZE } from "@/lib/constants";
-import { Column } from "@/lib/types";
 
 interface Props {
   pokemon: PokemonDetail;
@@ -15,12 +17,51 @@ interface Props {
 
 export default function PokemonPage({ pokemon, triggers, triggerPage }: Props) {
   const router = useRouter();
-  const cols: Column<NamedAPIResource>[] = [
-    { header: "Name", accessor: "name" },
+  const { modal } = router.query;
+
+  const [selectedTrigger, setSelectedTrigger] =
+    useState<NamedAPIResource | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // The Synchronize modal open state with URL `modal` query needs to be updated in this step
+  useEffect(() => {
+    if (typeof modal === "string") {
+      const found = triggers.results.find((t) => t.name === modal);
+      if (found) {
+        setSelectedTrigger(found);
+        setIsModalOpen(true);
+      }
+    } else {
+      setIsModalOpen(false);
+      setSelectedTrigger(null);
+    }
+  }, [modal, triggers.results]);
+
+  const cols: ColumnDef<NamedAPIResource, any>[] = [
+    { accessorKey: "name", header: "Trigger Name" },
+    { accessorKey: "url", header: "URL" },
   ];
 
-  const handlePageChange = (newPage: number) => {
-    router.push(`/pokemon/${pokemon.name}?triggerPage=${newPage}`);
+  // It is good to use an object form for router.push, becasue using inline we can generate a temaplte bug
+  const goToPage = (newPage: number) => {
+    router.push({
+      pathname: `/pokemon/${pokemon.name}`,
+      query: { triggerPage: newPage },
+    });
+  };
+
+  const handleRowClick = (trigger: NamedAPIResource) => {
+    router.push({
+      pathname: `/pokemon/${pokemon.name}`,
+      query: { triggerPage, modal: trigger.name },
+    });
+  };
+
+  const handleModalClose = () => {
+    router.push({
+      pathname: `/pokemon/${pokemon.name}`,
+      query: { triggerPage },
+    });
   };
 
   return (
@@ -51,9 +92,20 @@ export default function PokemonPage({ pokemon, triggers, triggerPage }: Props) {
           data={triggers.results}
           pageIndex={triggerPage}
           totalCount={triggers.count}
-          onPageChange={handlePageChange}
+          onPageChange={goToPage}
+          onRowClick={handleRowClick}
         />
       </div>
+
+      {selectedTrigger && isModalOpen && (
+        <CustomModal
+          pokemon={pokemon}
+          triggers={triggers}
+          pageIndex={triggerPage}
+          onPageChange={goToPage}
+          onClose={handleModalClose}
+        />
+      )}
     </div>
   );
 }
@@ -69,6 +121,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({
       : query.triggerPage || "0",
     10
   );
+
   const triggerOffset = triggerPage * PAGE_SIZE;
 
   try {
@@ -76,10 +129,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({
       getPokemonDetail(name),
       getEvolutionTriggers(triggerOffset),
     ]);
-
-    return {
-      props: { pokemon, triggers, triggerPage },
-    };
+    return { props: { pokemon, triggers, triggerPage } };
   } catch {
     return { notFound: true };
   }
