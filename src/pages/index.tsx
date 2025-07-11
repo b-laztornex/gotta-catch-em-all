@@ -7,14 +7,24 @@ import { useState, useEffect } from "react";
 import Table from "@/components/CustomTable";
 import { Column } from "@/lib/types";
 import CustomModal from "@/components/CustomModal";
-import { getPokemonList, getPokemonDetail } from "@/lib/api";
-import type { PokemonDetail, NamedAPIResource, PagedResult } from "@/lib/types";
+import {
+  getPokemonList,
+  getPokemonDetail,
+  getEvolutionTriggers,
+} from "@/lib/api";
+import type {
+  PokemonDetail,
+  NamedAPIResource,
+  PagedResult,
+  Trigger,
+} from "@/lib/types";
 
 interface Props {
   listData: PagedResult<NamedAPIResource>;
   initialPage: number;
   initialFilter: string;
   modalData: PokemonDetail | null;
+  triggers: Trigger[];
 }
 
 export default function HomePage({
@@ -22,6 +32,7 @@ export default function HomePage({
   initialPage,
   initialFilter,
   modalData,
+  triggers,
 }: Props) {
   const router = useRouter();
   const [page, setPage] = useState(initialPage);
@@ -36,11 +47,11 @@ export default function HomePage({
     { header: "Name", accessor: "name" },
   ];
 
-  const handleRowClick = (name: string) => {
+  const handleRowClick = (row: NamedAPIResource) => {
     router.push(
       {
         pathname: "/",
-        query: { page, filter, modal: name },
+        query: { page, filter, modal: row.name },
       },
       undefined
     );
@@ -80,7 +91,15 @@ export default function HomePage({
         onRowClick={handleRowClick}
       />
 
-      {modalData && <CustomModal pokemon={modalData} onClose={closeModal} />}
+      {modalData && (
+        <CustomModal
+          pokemon={modalData}
+          triggers={triggers}
+          onClose={closeModal}
+          pageIndex={page}
+          onPageChange={handlePageChange}
+        />
+      )}
     </div>
   );
 }
@@ -99,7 +118,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({
       const detail = await getPokemonDetail(filter.toLowerCase());
       listData = {
         count: 1,
-        results: [{ name: detail.name, url: detail.species.url }],
+        results: [{ name: detail.name, url: `/pokemon/${detail.name}` }],
       };
     } catch {
       listData = { count: 0, results: [] };
@@ -108,13 +127,17 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({
     listData = await getPokemonList(page);
   }
 
-  // 2) modal detail
+  // 2) modal detail and also triggers
   let modalData: PokemonDetail | null = null;
+  let triggers: NamedAPIResource[] = [];
   if (modal) {
     try {
       modalData = await getPokemonDetail(modal.toLowerCase());
+      const triggerResult = await getEvolutionTriggers();
+      triggers = triggerResult.results;
     } catch {
       modalData = null;
+      triggers = [];
     }
   }
 
@@ -124,6 +147,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({
       initialPage: page,
       initialFilter: filter,
       modalData,
+      triggers,
     },
   };
 };
