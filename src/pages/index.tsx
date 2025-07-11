@@ -4,7 +4,8 @@ import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 
-import Table, { Column } from "@/components/CustomTable";
+import Table from "@/components/CustomTable";
+import { Column } from "@/lib/types";
 import CustomModal from "@/components/CustomModal";
 import { getPokemonList, getPokemonDetail } from "@/lib/api";
 import type { PokemonDetail, NamedAPIResource, PagedResult } from "@/lib/types";
@@ -26,7 +27,6 @@ export default function HomePage({
   const [page, setPage] = useState(initialPage);
   const [filter, setFilter] = useState(initialFilter);
 
-  // keep filter in sync if user navigates via back/forward
   useEffect(() => {
     setFilter(initialFilter);
     setPage(initialPage);
@@ -43,7 +43,6 @@ export default function HomePage({
         query: { page, filter, modal: name },
       },
       undefined
-      // no shallow: re-runs getServerSideProps
     );
   };
 
