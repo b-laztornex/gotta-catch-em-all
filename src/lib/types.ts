@@ -14,17 +14,24 @@ export interface PokemonListResponse {
 }
 
 export interface PokemonDetail {
-  id: number;
   name: string;
+  id: number;
+  order: number;
+  base_experience: number;
   height: number;
   weight: number;
-  sprites: {
-    front_default: string;
-    [key: string]: any;
-  };
+  is_default: boolean;
+  location_area_encounters?: string;
+  past_types?: Array<Record<string, unknown>>;
 }
 
 export interface PagedResult<T> {
   count: number;
   results: T[];
+}
+
+export interface Trigger {
+  name: string;
+  url: string;
+  details?: string;
 }
