@@ -22,7 +22,13 @@ export interface PokemonDetail {
   weight: number;
   is_default: boolean;
   location_area_encounters?: string;
-  past_types?: Array<Record<string, unknown>>;
+  past_types?: { type: { name: string } }[];
+  sprites?: {
+    front_default?: string;
+    other?: {
+      [key: string]: unknown;
+    };
+  };
 }
 
 export interface PagedResult<T> {

@@ -63,8 +63,7 @@ export default function HomePage({
   };
 
   const closeModal = () => {
-    const { modal, ...keep } = router.query;
-    router.push({ pathname: "/", query: keep });
+    router.push({ pathname: "/", query: router.query });
   };
 
   return (

@@ -8,6 +8,7 @@ import type { PokemonDetail, NamedAPIResource, PagedResult } from "@/lib/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { getPokemonDetail, getEvolutionTriggers } from "@/lib/api";
 import { PAGE_SIZE } from "@/lib/constants";
+import Image from "next/image";
 
 interface Props {
   pokemon: PokemonDetail;
@@ -37,7 +38,7 @@ export default function PokemonPage({ pokemon, triggers, triggerPage }: Props) {
     }
   }, [modal, triggers.results]);
 
-  const cols: ColumnDef<NamedAPIResource, any>[] = [
+  const cols: ColumnDef<unknown, unknown>[] = [
     { accessorKey: "name", header: "Trigger Name" },
     { accessorKey: "url", header: "URL" },
   ];
@@ -50,7 +51,8 @@ export default function PokemonPage({ pokemon, triggers, triggerPage }: Props) {
     });
   };
 
-  const handleRowClick = (trigger: NamedAPIResource) => {
+  const handleRowClick = (row: unknown) => {
+    const trigger = row as NamedAPIResource;
     router.push({
       pathname: `/pokemon/${pokemon.name}`,
       query: { triggerPage, modal: trigger.name },
@@ -72,9 +74,11 @@ export default function PokemonPage({ pokemon, triggers, triggerPage }: Props) {
 
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">{pokemon.name}</h1>
-        <img
-          src={pokemon.sprites.front_default}
+        <Image
+          src={pokemon.sprites?.front_default || ""}
           alt={pokemon.name}
+          width={128}
+          height={128}
           className="w-32 h-32"
         />
         <p>
@@ -100,7 +104,7 @@ export default function PokemonPage({ pokemon, triggers, triggerPage }: Props) {
       {selectedTrigger && isModalOpen && (
         <CustomModal
           pokemon={pokemon}
-          triggers={triggers}
+          triggers={triggers.results}
           pageIndex={triggerPage}
           onPageChange={goToPage}
           onClose={handleModalClose}

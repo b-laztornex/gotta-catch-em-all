@@ -1,28 +1,36 @@
 import React from "react";
 
 jest.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  DialogContent: ({ children, ...props }: any) => (
+  Dialog: ({ children, ...props }: Record<string, unknown>) => (
     <div {...props}>{children}</div>
   ),
-  DialogClose: ({ children }: any) => <>{children}</>,
+  DialogContent: ({ children, ...props }: Record<string, unknown>) => (
+    <div {...props}>{children}</div>
+  ),
+  DialogClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 jest.mock("@/components/CustomTable", () => ({
   __esModule: true,
-  default: ({ columns, data }: any) => (
+  default: ({
+    columns,
+    data,
+  }: {
+    columns: Array<{ header: string; accessorKey: string }>;
+    data: Array<{ [key: string]: string }>;
+  }) => (
     <div>
       <table>
         <thead>
           <tr>
-            {columns.map((col: any) => (
+            {columns.map((col) => (
               <th key={col.header}>{col.header}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {data.map((row: any, i: number) => (
+          {data.map((row, i) => (
             <tr key={i}>
-              {columns.map((col: any) => (
+              {columns.map((col) => (
                 <td key={col.header}>{row[col.accessorKey]}</td>
               ))}
             </tr>
@@ -43,13 +51,16 @@ jest.mock("@/components/CustomTable", () => ({
 }));
 jest.mock("@/components/ui/ModalHeader", () => ({
   __esModule: true,
-  default: ({ pokemon }: { pokemon: any }) => (
+  default: ({ pokemon }: { pokemon: { name: string } }) => (
     <div data-testid="modal-header">Header: {pokemon.name}</div>
   ),
 }));
 jest.mock("@/components/ui/ModalBody", () => ({
   __esModule: true,
-  default: (props: any) => (
+  default: (props: {
+    pokemon: { name: string };
+    triggers: { name: string }[];
+  }) => (
     <div data-testid="modal-body">
       Body: {props.pokemon.name}
       {props.triggers && props.triggers.length > 0 && (
@@ -60,7 +71,7 @@ jest.mock("@/components/ui/ModalBody", () => ({
 }));
 jest.mock("@/components/ui/ModalFooter", () => ({
   __esModule: true,
-  default: (props: any) => (
+  default: (props: { onClose: () => void }) => (
     <div data-testid="modal-footer">
       Footer
       <button onClick={props.onClose}>Close</button>
